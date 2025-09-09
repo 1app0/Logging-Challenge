@@ -2,25 +2,35 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using app.logging.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSingleton<IWeatherService, FakeWeatherService>();
+builder.Services.AddSerilog(builder.Configuration);
 
 var app = builder.Build();
 
-app.MapGet("/weather/current", async (string city, IWeatherService weatherService) =>
+app.UseSerilogRequestLogging();
+
+app.MapGet("/", () => "Hello World!");
+
+app.MapGet("/weather/current", async (string city, IWeatherService weatherService, ILogger<Program> logger) =>
 {
+    logger.LogInformation("Called current");
     var result = await weatherService.GetCurrentWeatherAsync(city);
     return Results.Ok(result);
 });
 
-app.MapGet("/weather/forecast", async (string city, IWeatherService weatherService) =>
+app.MapGet("/weather/forecast", async (string city, IWeatherService weatherService, ILogger<Program> logger) =>
 {
+    logger.LogInformation("Called forecast");
     var result = await weatherService.GetForecastAsync(city);
     return Results.Ok(result);
 });
