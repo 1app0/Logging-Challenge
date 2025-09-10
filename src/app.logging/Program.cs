@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using app.logging.Extensions;
+using app.logging.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,14 +13,24 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSingleton<IWeatherService, FakeWeatherService>();
 builder.Services.AddSerilog(builder.Configuration);
+
+builder.Services.AddTransient<LogContextProvider>();
+builder.Services.AddSingleton<IWeatherService, FakeWeatherService>();
 
 var app = builder.Build();
 
+app.UseLogContextProviderMiddleware();
+
 app.UseSerilogRequestLogging();
 
-app.MapGet("/", () => "Hello World!");
+
+app.MapGet("/", (ILogger<Program> logger) =>
+{
+    logger.LogInformation("Hello world called");
+
+    return "HELLO WORLD!";
+});
 
 app.MapGet("/weather/current", async (string city, IWeatherService weatherService, ILogger<Program> logger) =>
 {
