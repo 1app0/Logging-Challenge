@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -10,7 +11,8 @@ public static class ServiceCollectionExtensions
     {
         services.AddSerilog((servicesProvider, lc) => lc
             .ReadFrom.Configuration(configuration)
-            .ReadFrom.Services(servicesProvider));
+            .Enrich.WithProperty("AssemblyVersion",
+                Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown AssemblyVersion"));
 
         return services;
     }
