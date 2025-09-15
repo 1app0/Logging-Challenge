@@ -23,7 +23,7 @@ public class LogContextProvider(ILogger<LogContextProvider> logger) : IMiddlewar
     {
         context.Request.Headers.TryGetValue("x-correlation-id", out var correlationId);
 
-        return correlationId.FirstOrDefault() ?? context.TraceIdentifier;
+        return correlationId.FirstOrDefault() ?? Guid.NewGuid().ToString();
     }
 }
 
