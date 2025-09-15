@@ -22,7 +22,7 @@ public class GlobalExceptionHandler(
             Status = StatusCodes.Status500InternalServerError,
             Title = "Internal Server Error occurred",
             Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
-            Detail = "Fatal error occurred, please notify the team and provide the traceId",
+            Detail = "An unexpected server error occurred, please notify the team and provide the traceId",
         };
 
         return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext

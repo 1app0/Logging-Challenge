@@ -35,34 +35,32 @@ var app = builder.Build();
 
 app.UseLogContextProviderMiddleware();
 
-app.UseSerilogRequestLogging(options =>
-{
-    options.IncludeQueryInRequestPath = true;
-});
+app.UseSerilogRequestLogging(options => { options.IncludeQueryInRequestPath = true; });
 
 app.UseExceptionHandler();
 
 app.UseStatusCodePages();
 
-
-app.MapGet("/", (ILogger<Program> logger) =>
-{
-    logger.LogInformation("Hello world called");
-
-    return "HELLO WORLD!";
-});
-
 app.MapGet("/weather/current", async (string city, IWeatherService weatherService, ILogger<Program> logger) =>
 {
-    var result = await weatherService.GetCurrentWeatherAsync(city);
-    logger.LogInformation("Successfully fetched weather data for {City}", city);
-    return Results.Ok(result);
+    try
+    {
+        var result = await weatherService.GetCurrentWeatherAsync(city);
+
+        logger.LogInformation("Successfully fetched weather data for {City}", city);
+        return Results.Ok(result);
+    }
+    catch (Exception)
+    {
+        logger.LogError("Failed to fetch weather data for {City}", city);
+        return Results.InternalServerError();
+    }
 });
 
 app.MapGet("/weather/forecast", async (string city, IWeatherService weatherService, ILogger<Program> logger) =>
 {
     var result = await weatherService.GetForecastAsync(city);
-    logger.LogInformation("Successfully fetched forecast data for {City}", city);
+    logger.LogInformation("Successfully fetched forecast data for city {City}, {DaysCount} days", city, result.Count());
     return Results.Ok(result);
 });
 
