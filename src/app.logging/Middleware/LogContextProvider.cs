@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -11,11 +13,23 @@ public class LogContextProvider(ILogger<LogContextProvider> logger) : IMiddlewar
 {
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var correlationId = GetCorrelationId(context);
+        var stopwatch = Stopwatch.StartNew();
+        var correlationId = GetCorrelationId(context); 
+
         context.Response.Headers["x-correlation-id"] = correlationId;
         using (LogContext.PushProperty("CorrelationId", correlationId))
         {
-            await next(context);
+            try
+            {
+                await next(context);
+            }
+            finally
+            {
+                stopwatch.Stop();
+                var elapsedTimeInMs = stopwatch.ElapsedMilliseconds;
+                logger.LogInformation("Request {method}, Path {url} executed in {durationTimeMs} ms", context.Request.Method,
+                    context.Request.Path, elapsedTimeInMs);
+            }
         }
     }
 
