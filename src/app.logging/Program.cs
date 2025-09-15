@@ -6,6 +6,7 @@ using app.logging.Extensions;
 using app.logging.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -15,6 +16,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSerilog(builder.Configuration);
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Instance = $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
+        context.ProblemDetails.Extensions.Add("requestId", context.HttpContext.TraceIdentifier);
+        var activity = context.HttpContext.Features.Get<IHttpActivityFeature>()?.Activity;
+        context.ProblemDetails.Extensions.TryAdd("traceId", activity?.Id);
+    };
+});
+
 builder.Services.AddTransient<LogContextProvider>();
 builder.Services.AddSingleton<IWeatherService, FakeWeatherService>();
 
@@ -22,7 +35,14 @@ var app = builder.Build();
 
 app.UseLogContextProviderMiddleware();
 
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(options =>
+{
+    options.IncludeQueryInRequestPath = true;
+});
+
+app.UseExceptionHandler();
+
+app.UseStatusCodePages();
 
 
 app.MapGet("/", (ILogger<Program> logger) =>
@@ -34,15 +54,15 @@ app.MapGet("/", (ILogger<Program> logger) =>
 
 app.MapGet("/weather/current", async (string city, IWeatherService weatherService, ILogger<Program> logger) =>
 {
-    logger.LogInformation("Called current");
     var result = await weatherService.GetCurrentWeatherAsync(city);
+    logger.LogInformation("Successfully fetched weather data for {City}", city);
     return Results.Ok(result);
 });
 
 app.MapGet("/weather/forecast", async (string city, IWeatherService weatherService, ILogger<Program> logger) =>
 {
-    logger.LogInformation("Called forecast");
     var result = await weatherService.GetForecastAsync(city);
+    logger.LogInformation("Successfully fetched forecast data for {City}", city);
     return Results.Ok(result);
 });
 

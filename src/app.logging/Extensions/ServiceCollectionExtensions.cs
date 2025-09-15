@@ -9,7 +9,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddSerilog(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSerilog((servicesProvider, lc) => lc
+        services.AddSerilog((_, lc) => lc
             .ReadFrom.Configuration(configuration)
             .Enrich.WithProperty("AssemblyVersion",
                 Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown AssemblyVersion"));
