@@ -15,7 +15,7 @@ public class GlobalExceptionHandler(
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception,
         CancellationToken cancellationToken)
     {
-        logger.LogError(exception, "Unhandled exception occurred");
+        logger.LogCritical(exception, "Unhandled exception occurred");
 
         var problemDetails = new ProblemDetails
         {
