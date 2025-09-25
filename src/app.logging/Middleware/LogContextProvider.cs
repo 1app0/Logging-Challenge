@@ -27,8 +27,9 @@ public class LogContextProvider(ILogger<LogContextProvider> logger) : IMiddlewar
             {
                 stopwatch.Stop();
                 var elapsedTimeInMs = stopwatch.ElapsedMilliseconds;
-                logger.LogInformation("Request {method}, Path {url} executed in {durationTimeMs} ms", context.Request.Method,
-                    context.Request.Path, elapsedTimeInMs);
+                var requestSpeed = elapsedTimeInMs > 500 ? "slow as hell" : "fast as f";
+                logger.LogInformation("Request {method}, Path {url} executed in {durationTimeMs} ms, {requestSpeed}", context.Request.Method,
+                    context.Request.Path, elapsedTimeInMs, requestSpeed);
             }
         }
     }
